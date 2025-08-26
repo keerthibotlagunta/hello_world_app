@@ -1,7 +1,8 @@
 from aws_cdk import (
-    # Duration,
     Stack,
-    # aws_sqs as sqs,
+    aws_ec2 as ec2,
+    aws_ecs as ecs,
+    aws_ecs_patterns as ecs_patterns,
 )
 from constructs import Construct
 
@@ -10,10 +11,24 @@ class CdkHelloFargateStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        # Create a new VPC
+        vpc = ec2.Vpc(self, "HelloVpc", max_azs=2)
 
-        # example resource
-        # queue = sqs.Queue(
-        #     self, "CdkHelloFargateQueue",
-        #     visibility_timeout=Duration.seconds(300),
-        # )
+        # Create ECS Cluster
+        cluster = ecs.Cluster(self, "HelloCluster", vpc=vpc)
+
+        # Fargate Service with Application Load Balancer
+        ecs_patterns.ApplicationLoadBalancedFargateService(
+            self, "HelloFargateService",
+            cluster=cluster,
+            cpu=256,
+            memory_limit_mib=512,
+            desired_count=1,
+            public_load_balancer=True,
+            task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
+                image=ecs.ContainerImage.from_registry(
+                    "464967794078.dkr.ecr.us-east-1.amazonaws.com/hello-world-repo:latest"
+                ),
+                container_port=8080,   # must match app.js
+            )
+        )
