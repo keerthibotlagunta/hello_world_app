@@ -1,0 +1,49 @@
+name: Deploy to ECS Fargate with CDK
+
+on:
+  push:
+    branches: [ main ]   # Trigger workflow on push to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout source code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Setup Node.js (needed for CDK CLI)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Setup Python (for CDK app code)
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install aws-cdk-lib constructs
+
+      # Configure AWS credentials (from GitHub Secrets)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Install AWS CDK CLI
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
+      # Deploy with CDK
+      - name: Deploy CDK Stack
+        run: |
+          cdk deploy --require-approval never
