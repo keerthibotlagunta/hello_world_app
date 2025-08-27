@@ -11,13 +11,13 @@ class CdkHelloFargateStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # VPC
+        # Create a new VPC
         vpc = ec2.Vpc(self, "HelloVpc", max_azs=2)
 
-        # ECS Cluster
+        # Create ECS Cluster
         cluster = ecs.Cluster(self, "HelloCluster", vpc=vpc)
 
-        # Fargate Service using Dockerfile from ./app folder
+        # Fargate Service with Application Load Balancer
         ecs_patterns.ApplicationLoadBalancedFargateService(
             self, "HelloFargateService",
             cluster=cluster,
@@ -26,7 +26,9 @@ class CdkHelloFargateStack(Stack):
             desired_count=1,
             public_load_balancer=True,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                image=ecs.ContainerImage.from_asset("./cdk-hello-fargate"),  # path to app
-                container_port=8080,
+                image=ecs.ContainerImage.from_registry(
+                    "464967794078.dkr.ecr.us-east-1.amazonaws.com/hello-world-repo:latest"
+                ),
+                container_port=8080,   # must match app.js
             )
         )
