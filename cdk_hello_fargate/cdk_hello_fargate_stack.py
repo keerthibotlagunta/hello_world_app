@@ -26,9 +26,8 @@ class CdkHelloFargateStack(Stack):
             desired_count=1,
             public_load_balancer=True,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                image=ecs.ContainerImage.from_registry(
-                    "464967794078.dkr.ecr.us-east-1.amazonaws.com/hello-world-repo:latest"
-                ),
+                # 👇 Build Docker image directly from your local app.js + Dockerfile
+                image=ecs.ContainerImage.from_asset("./"),
                 container_port=8080,   # must match app.js
             )
         )
