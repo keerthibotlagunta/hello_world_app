@@ -29,7 +29,7 @@ jobs:
           IMAGE_REPO=464967794078.dkr.ecr.us-east-1.amazonaws.com/hello-world-repo
           IMAGE_TAG=latest
 
-          docker build -t $IMAGE_REPO:$IMAGE_TAG ./cdk-hello-fargate
+          docker build -t $IMAGE_REPO:$IMAGE_TAG ./hello-world-app/cdk-hello-fargate
           docker push $IMAGE_REPO:$IMAGE_TAG
 
       - name: Set up Python
