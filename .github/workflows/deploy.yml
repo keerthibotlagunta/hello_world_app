@@ -2,55 +2,47 @@ name: Deploy to ECS Fargate with CDK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]   # Trigger workflow on push to main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
+      # Checkout source code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Python (for CDK)
-      - name: Set up Python
+      # Setup Node.js (needed for CDK CLI)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Setup Python (for CDK app code)
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
 
-      # Install CDK dependencies
+      # Install dependencies
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          npm install -g aws-cdk
-
-      # Log in to Amazon ECR
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # Build & push Docker image from hello-world-app/
-      - name: Build, Tag, and Push image to ECR
-        run: |
-          IMAGE_REPO=464967794078.dkr.ecr.us-east-1.amazonaws.com/hello-world-repo
-          IMAGE_TAG=latest
-
-          docker build -t $IMAGE_REPO:$IMAGE_TAG ./hello-world-app
-          docker push $IMAGE_REPO:$IMAGE_TAG
-
-      # Configure AWS credentials
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+          pip install aws-cdk-lib constructs
+      # Configure AWS credentials (from GitHub Secrets)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      # CDK Deploy
-      - name: CDK Deploy
-        run: |
-          cd cdk-hello-fargate
-          cdk deploy --require-approval never
+      # Install AWS CDK CLI
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
 
+      # Deploy with CDK
+      - name: Deploy CDK Stack
+        run: |
+          cdk deploy --require-approval never
